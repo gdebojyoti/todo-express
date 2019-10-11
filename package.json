@@ -1,0 +1,18 @@
+{
+  "name": "todo-express",
+  "version": "0.1.0",
+  "description": "Backend service for The Todo App",
+  "main": "index.js",
+  "scripts": {
+    "start": "nodemon --watch src --exec \"node src/index.js\""
+  },
+  "keywords": [],
+  "author": "Debojyoti Ghosh",
+  "license": "ISC",
+  "dependencies": {
+    "cors": "^2.8.5",
+    "express": "^4.17.1",
+    "google-auth-library": "^5.4.0",
+    "nodemon": "^1.19.3"
+  }
+}
