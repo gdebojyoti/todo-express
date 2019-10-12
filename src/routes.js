@@ -1,39 +1,43 @@
-const config = require('./config')
+const DatabaseService = new (require('./services/db'))()
+const { validateGoogleLogin } = require('./utils/validateLogin')
+const generateHash = require('./utils/generateHash')
 
 const appRouter = function (app) {
-  app.use('/validateGoogleToken', (req, res) => {
-    const { token } = req.body || {}
+  app.use('/postGoogleLogin', (req, res) => {
+    const { token: googleAuthToken } = req.body || {}
 
-    if (!token) {
-      res.status(401).send({
-        msg: 'token is missing'
-      })
-    }
-
-    const { OAuth2Client } = require('google-auth-library')
-    const client = new OAuth2Client(config.GOOGLE_CLIENT_ID)
-    async function verify () {
-      const ticket = await client.verifyIdToken({
-        idToken: token,
-        audience: config.GOOGLE_CLIENT_ID // [CLIENT_ID_1, CLIENT_ID_2, CLIENT_ID_3]
-      })
-      const payload = ticket.getPayload()
-
-      const userDetails = {
-        googleid: payload.sub,
-        email: payload.email,
-        image: payload.picture,
-        name: payload.name,
-        fname: payload.given_name,
-        lname: payload.family_name,
-        domain: payload.hd // request specified a G Suite domain
+    // verify validity of client's Google auth token
+    validateGoogleLogin(googleAuthToken).then(async ({ code = 200, data }) => {
+      // if Google auth token is valid
+      if (data && code === 200) {
+        // check for user with email in DB
+        const user = await DatabaseService.getUser(data.email)
+        if (user) {
+          // if user found, return 'token' to client
+          res.send({ msg: 'user found', token: user.token })
+        } else {
+          // create new user
+          const { email, name, fname, lname, image } = data
+          const token = generateHash(email)
+          const userDetails = {
+            id: (new Date()).getTime(),
+            token,
+            email,
+            name,
+            fname,
+            lname,
+            image,
+            googleAuthToken
+          }
+          // add new entry in DB
+          await DatabaseService.addUser(userDetails)
+          // send generated 'token' to client
+          res.send({ msg: 'user added', token })
+        }
+      } else {
+        // if invalid (or any other error occurs), show error to client
+        res.status(code).send(data)
       }
-
-      res.send(userDetails)
-    }
-    verify().catch(err => {
-      console.error('oops', typeof err)
-      res.status(400).send(err)
     })
   })
 

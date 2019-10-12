@@ -11,8 +11,10 @@
   "license": "ISC",
   "dependencies": {
     "cors": "^2.8.5",
+    "crypto": "^1.0.1",
     "express": "^4.17.1",
     "google-auth-library": "^5.4.0",
+    "mongodb": "^3.3.2",
     "nodemon": "^1.19.3"
   }
 }
