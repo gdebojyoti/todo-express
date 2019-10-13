@@ -45,11 +45,14 @@ const appRouter = function (app) {
     const { todos, email, token } = req.body || {}
     const cArr = todos || []
 
-    // fetch array of todos from server (sArr)
+    // check if user is authorized
     const user = await DatabaseService.getAuthorizedUser(email, token)
     if (!user) {
       res.status(403).send({ msg: 'unauthorized user' })
+      return
     }
+
+    // fetch array of todos from server (sArr)
     const data = await DatabaseService.fetchTodos(user.id)
     const sArr = data ? data.todos : []
 
@@ -105,6 +108,7 @@ const appRouter = function (app) {
     const saved = await DatabaseService.saveTodos(updatedData)
     if (!saved) {
       res.status(400).send({ msg: 'data sync failed' })
+      return
     }
 
     // send it to client
