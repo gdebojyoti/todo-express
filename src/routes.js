@@ -12,10 +12,7 @@ const appRouter = function (app) {
       if (data && code === 200) {
         // check for user with email in DB
         const user = await DatabaseService.getUser(data.email)
-        if (user) {
-          // if user found, return 'token' to client
-          res.send({ msg: 'user found', token: user.token })
-        } else {
+        if (!user) {
           // create new user
           const { email, name, fname, lname, image } = data
           const token = generateHash(email)
@@ -31,9 +28,15 @@ const appRouter = function (app) {
           }
           // add new entry in DB
           await DatabaseService.addUser(userDetails)
-          // send generated 'token' to client
-          res.send({ msg: 'user added', token })
         }
+
+        // set generated / retrieved 'token' as cookie in client
+        res.cookie('token', user.token, {
+          httpOnly: true,
+          // secure: true, // @TODO: enable after adding https
+          maxAge: 1000 * 60 * 60 * 24 // 24 hour
+        })
+        res.send({ success: true, msg: `user ${user ? 'found' : 'added'}` })
       } else {
         // if invalid (or any other error occurs), show error to client
         res.status(code).send(data)
@@ -42,12 +45,13 @@ const appRouter = function (app) {
   })
 
   app.use('/syncTodos', async (req, res) => {
-    const { todos, email, token } = req.body || {}
+    const { token } = req.cookies || {}
+    const { todos, email } = req.body || {}
     const cArr = todos || []
 
     // check if user is authorized
     const user = await DatabaseService.getAuthorizedUser(email, token)
-    if (!user) {
+    if (!token || !user) {
       res.status(403).send({ msg: 'unauthorized user' })
       return
     }
@@ -112,7 +116,7 @@ const appRouter = function (app) {
     }
 
     // send it to client
-    res.send({ todos: sArr })
+    res.send({ success: true, todos: sArr })
   })
 
   app.use('/', (req, res) => {

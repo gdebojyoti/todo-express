@@ -1,5 +1,6 @@
 const express = require('express')
 const cors = require('cors')
+const cookieParser = require('cookie-parser')
 
 const config = require('./config')
 const routes = require('./routes')
@@ -7,6 +8,8 @@ const routes = require('./routes')
 const app = express()
 
 app.use(express.json()) // bodyparser - for parsing req.body
+
+app.use(cookieParser()) // ability to read cookies
 
 // app.use(express.static('public'))
 
@@ -21,7 +24,8 @@ app.use(cors({
       return callback(new Error(msg), false)
     }
     return callback(null, true)
-  }
+  },
+  credentials: true
 }))
 
 routes(app)
