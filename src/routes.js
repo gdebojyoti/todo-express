@@ -49,9 +49,14 @@ const appRouter = function (app) {
     const { todos, email } = req.body || {}
     const cArr = todos || []
 
+    if (!token) {
+      res.status(403).send({ msg: 'token is missing' })
+      return
+    }
+
     // check if user is authorized
     const user = await DatabaseService.getAuthorizedUser(email, token)
-    if (!token || !user) {
+    if (!user) {
       res.status(403).send({ msg: 'unauthorized user' })
       return
     }
