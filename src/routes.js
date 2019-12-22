@@ -34,7 +34,7 @@ const appRouter = function (app) {
         res.cookie('token', user.token, {
           httpOnly: true,
           // secure: true, // @TODO: enable after adding https
-          maxAge: 1000 * 60 * 60 * 24 // 24 hour
+          maxAge: 1000 * 60 * 60 * 24 * 365 // 1 year
         })
         res.send({ success: true, msg: `user ${user ? 'found' : 'added'}` })
       } else {
